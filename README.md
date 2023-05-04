@@ -7,6 +7,7 @@ Before starting, ensure that your system meets the following requirements:
 1. Ubuntu 22.04
 2. ROS2 Humble
 3. Nav2 
+4. SLAM Toolbox
 
 ## Running the Navigation System
 To run the navigation system, use the following commands:
