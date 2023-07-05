@@ -36,6 +36,13 @@ def generate_launch_description():
         parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
 
+    # joint_state_publisher_gui_node = launch_ros.actions.Node(
+    #     package='joint_state_publisher_gui',
+    #     executable='joint_state_publisher_gui',
+    #     name='joint_state_publisher_gui',
+    #     condition=launch.conditions.IfCondition(LaunchConfiguration('gui'))
+    # )
+
     map_server_node = launch_ros.actions.Node(
         package='nav2_map_server',
         executable='map_server',
@@ -57,12 +64,15 @@ def generate_launch_description():
                                             description='Absolute path to robot urdf file'),
         launch.actions.DeclareLaunchArgument(name='rvizconfig', default_value=default_rviz_config_path,
                                             description='Absolute path to rviz config file'),
-        launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='True',
+        launch.actions.DeclareLaunchArgument(name='use_sim_time', default_value='False',
                                              description='Flag to enable use_sim_time'),
+        # launch.actions.DeclareLaunchArgument(name='gui', default_value='True',
+        #                                      description='Flag to enable joint_state_publisher_gui'),
         joint_state_publisher_node,
         robot_state_publisher_node,
         rviz_node,
-        robot_localization_node,
+        # robot_localization_node,
+        # joint_state_publisher_gui_node,
         #map_server_node,
         #lifecycle_manager_node
     ])
