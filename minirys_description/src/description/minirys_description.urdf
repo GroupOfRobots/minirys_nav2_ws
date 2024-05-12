@@ -2,24 +2,40 @@
 <robot name="minirys" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Define robot constants -->
+  <xacro:arg name="namespace" default="minirys"/>
+  <xacro:property name="namespace_property" value="$(arg namespace)"/>
   <xacro:property name="wheel_radius" value="0.055"/>
   <xacro:property name="body_mass" value="1.16182"/>
   <xacro:property name="wheel_mass" value="0.170328"/>
   <xacro:property name="wheel_yoff" value="0.069"/>
+  <xacro:property name="material_color" value="0.8627450980392157 0.30196078431372547 0.00392156862745098 1.0"/>
+
+  <xacro:if value="${namespace_property == 'minirys1'}">
+    <xacro:property name="material_color" value="0.047058823529411764 1.0 0.047058823529411764 1.0" />
+  </xacro:if>
+  <xacro:if value="${namespace_property == 'minirys2'}">
+    <xacro:property name="material_color" value="0.8627450980392157 0.30196078431372547 0.00392156862745098 1.0" />
+  </xacro:if>
+  <xacro:if value="${namespace_property == 'minirys3'}">
+    <xacro:property name="material_color" value="0.596078431372549 0.0 0.00784313725490196 1.0" />
+  </xacro:if>
+  <xacro:if value="${namespace_property == 'minirys4'}">
+    <xacro:property name="material_color" value="0.4823529411764706 0.7843137254901961 0.9647058823529412 1.0" />
+  </xacro:if>
 
   <!-- Robot Base -->
 
-  <link name="base_link">
-      <visual name="visual">
+  <link name="$(arg namespace)/base_link">
+      <!-- <visual name="visual">
         <box size="0.01 0.01 0.01"/>
         <material name="black" >
           <color rgba="0.0 0.0 0.0 1.0" />
         </material>
-      </visual>
+      </visual> -->
 
     </link>
 
-  <link name="robot_base">
+  <link name="$(arg namespace)/robot_base">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <inertial>
       <mass value="${body_mass}"/>
@@ -66,13 +82,13 @@
       </collision>
   </link>
 
-  <joint name="robot_base_joint" type="continuous">
-        <parent link="base_link"/>
-        <child link="robot_base"/>
+  <joint name="$(arg namespace)/robot_base_joint" type="continuous">
+        <parent link="$(arg namespace)/base_link"/>
+        <child link="$(arg namespace)/robot_base"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <link name="robot_frame">
+  <link name="$(arg namespace)/robot_frame">
     <origin xyz="0 0 0" rpy="0 0 0"/>
 
     <visual>
@@ -81,29 +97,29 @@
         <mesh filename="package://minirys_description/src/description/stl/frame_coordinate_system.STL"/>
       </geometry>
       <material name="deeporange" >
-        <color rgba="0.8627450980392157 0.30196078431372547 0.00392156862745098 1.0" />
+        <color rgba="${material_color}" />
       </material>
     </visual>
 
   </link>
 
-  <joint name="base_frame_joint" type="fixed">
-          <parent link="robot_base"/>
-          <child link="robot_frame"/>
+  <joint name="$(arg namespace)/base_frame_joint" type="fixed">
+          <parent link="$(arg namespace)/robot_base"/>
+          <child link="$(arg namespace)/robot_frame"/>
           <origin xyz="0 0 0" rpy="0 0 0"/>
-    </joint>
+  </joint>
 
   <!-- Robot Footprint -->
-    <link name="base_footprint"/>
-    <joint name="base_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="base_footprint"/>
-      <origin xyz="0.0 0.0 ${-wheel_radius}" rpy="0 0 0"/>
+    <link name="$(arg namespace)/base_footprint"/>
+    <joint name="$(arg namespace)/base_footprint_joint" type="fixed">
+      <parent link="$(arg namespace)/base_footprint"/>
+      <child link="$(arg namespace)/base_link"/>
+      <origin xyz="0.0 0.0 ${wheel_radius}" rpy="0 0 0"/>
     </joint>
 
   <!-- Wheels -->
 
-  <link name="leftwheel">
+  <link name="$(arg namespace)/leftwheel">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <inertial>
       <mass value="${wheel_mass}"/>
@@ -129,7 +145,7 @@
     </collision>
   </link>
 
-  <link name="rightwheel">
+  <link name="$(arg namespace)/rightwheel">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <inertial>
       <mass value="${wheel_mass}"/>
@@ -155,23 +171,23 @@
     </collision>
   </link>
 
-  <joint name="base_link_to_rightwheel_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="rightwheel"/>
+  <joint name="$(arg namespace)/base_link_to_rightwheel_joint" type="fixed">
+    <parent link="$(arg namespace)/base_link"/>
+    <child link="$(arg namespace)/rightwheel"/>
     <origin xyz="0 ${wheel_yoff} 0" rpy="0 0 3.14159"/>
     <axis xyz="0 -1 0" />
   </joint>
 
-  <joint name="base_link_to_leftwheel_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="leftwheel"/>
+  <joint name="$(arg namespace)/base_link_to_leftwheel_joint" type="fixed">
+    <parent link="$(arg namespace)/base_link"/>
+    <child link="$(arg namespace)/leftwheel"/>
     <origin xyz="0 -${wheel_yoff} 0" rpy="0 0 0"/>
     <axis xyz="0 -1 0" />
   </joint>
 
   <!-- TOF -->
   <xacro:macro name="distance" params="number">
-    <link name="distance_${number}">
+    <link name="$(arg namespace)/distance_${number}">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -202,44 +218,44 @@
   <xacro:distance number="4"/>
   <xacro:distance number="5"/>
 
-  <joint name="distance_0_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_0"/>
+  <joint name="$(arg namespace)/distance_0_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_0"/>
     <origin xyz="0.093 -0.040 0" rpy="0 0 0"/>
   </joint>
 
-  <joint name="distance_1_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_1"/>
+  <joint name="$(arg namespace)/distance_1_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_1"/>
     <origin xyz="-0.022 0 -0.021" rpy="3.14159 0 3.14159"/>
   </joint>
 
-  <joint name="distance_2_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_2"/>
+  <joint name="$(arg namespace)/distance_2_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_2"/>
     <origin xyz="0.06 0.050 0" rpy="1.5708 0 1.5708"/>
   </joint>
 
-  <joint name="distance_3_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_3"/>
+  <joint name="$(arg namespace)/distance_3_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_3"/>
     <origin xyz="0.061 0 0.030" rpy="3.14159 -1.5708 0"/>
   </joint>
 
-  <joint name="distance_4_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_4"/>
+  <joint name="$(arg namespace)/distance_4_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_4"/>
     <origin xyz="0.061 0 -0.030" rpy="0 1.5708 0"/>
   </joint>
 
-  <joint name="distance_5_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="distance_5"/>
+  <joint name="$(arg namespace)/distance_5_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/distance_5"/>
     <origin xyz="0.06 -0.050 0" rpy="-1.5708 0 -1.5708"/>
   </joint>
 
   <!-- IMU -->
-  <link name="imu">
+  <link name="$(arg namespace)/imu">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -262,15 +278,15 @@
     </inertial>
   </link>
 
-  <joint name="imu_joint" type="fixed">
-    <parent link="robot_base"/>
-    <child link="imu"/>
+  <joint name="$(arg namespace)/imu_joint" type="fixed">
+    <parent link="$(arg namespace)/robot_base"/>
+    <child link="$(arg namespace)/imu"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
  <!-- LaserScan -->
 
-  <link name="laser_scan">
+  <link name="$(arg namespace)/laser_scan">
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <visual>
       <origin xyz="0 0 -0.0257" rpy="1.5708 0 0"/>
@@ -296,9 +312,9 @@
     </inertial>
   </link>
 
-  <joint name="laser_scan_joint" type="fixed">
-      <parent link="robot_base"/>
-      <child link="laser_scan"/>
+  <joint name="$(arg namespace)/laser_scan_joint" type="fixed">
+      <parent link="$(arg namespace)/robot_base"/>
+      <child link="$(arg namespace)/laser_scan"/>
       <origin xyz="0.044 0 0.059" rpy="0 0 0"/>
    </joint>
 

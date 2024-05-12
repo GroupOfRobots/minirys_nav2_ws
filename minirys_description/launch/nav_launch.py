@@ -22,9 +22,9 @@ from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.actions import Node
+from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
-from nav2_common.launch import RewrittenYaml
-
+from nav2_common.launch import RewrittenYaml, ReplaceString
 
 def generate_launch_description():
     # Get the launch directory
@@ -57,8 +57,14 @@ def generate_launch_description():
     # https://github.com/ros/robot_state_publisher/pull/30
     # TODO(orduno) Substitute with `PushNodeRemapping`
     #              https://github.com/ros2/launch_ros/issues/56
-    remappings = [('/tf', 'tf'),
-                  ('/tf_static', 'tf_static')]
+    # remappings = [('/tf', 'tf'),
+    #               ('/tf_static', 'tf_static')]
+    remappings = []
+
+    params_file = ReplaceString(
+        source_file=params_file,
+        replacements={'<robot_namespace>': ('/', namespace), '<robot_frame>': (namespace)},
+    )
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
@@ -77,12 +83,12 @@ def generate_launch_description():
 
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
-        default_value='',
+        default_value=namespace,
         description='Top-level namespace')
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(bringup_dir, 'maps', 'grant_map2.yaml'),
+        default_value=os.path.join(bringup_dir, 'maps', 'heros_board.yaml'),
         description='Full path to map yaml file to load')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -196,6 +202,7 @@ def generate_launch_description():
                 respawn=use_respawn,
                 respawn_delay=2.0,
                 parameters=[configured_params],
+                            # {'yaml_filename': map_yaml_file}],
                 arguments=['--ros-args', '--log-level', log_level],
                 remappings=remappings),
             Node(
@@ -291,7 +298,7 @@ def generate_launch_description():
 
     # Create the launch description and populate
     ld = LaunchDescription()
-
+    ld.add_action(PushRosNamespace(namespace=namespace))
     # Set environment variables
     ld.add_action(stdout_linebuf_envvar)
 
