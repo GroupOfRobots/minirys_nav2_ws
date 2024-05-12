@@ -13,26 +13,22 @@ Before starting, ensure that your system meets the following requirements:
 To run the navigation system, use the following commands:
 1. Run RViz node with miniRyś robot model
 ```
-ros2 launch minirys_description display.launch.py
+ros2 launch minirys_description display.launch.py namespace:=<robot_namespace>
 ```
-2. Run localization node
+2. Run Nav2 navigation stack
 ```
-ros2 launch minirys_description localization_launch.py
-```
-3. Run Nav2 navigation stack
-```
-ros2 launch nav2_bringup navigation_launch.py params_file:=minirys_description/config/nav2_params.yaml
+ros2 launch minirys_description nav_launch.py namespace:=<robot_namespace>
 ```
 
 ## Running SLAM Toolbox
 To run SLAM, use the following commands:
 1. Run RViz node with miniRyś robot model
 ```
-ros2 launch minirys_description display.launch.py
+ros2 launch minirys_description display.launch.py namespace:=<robot_namespace>
 ```
 2. Run SLAM Toolbox node
 ```
-ros2 launch minirys_description slam_toolbox.launch.py
+ros2 launch minirys_description slam_toolbox.launch.py namespace:=<robot_namespace>
 ```
 In order to save a map you can use the map_saver tool from the ros2 map_server package
 ```
