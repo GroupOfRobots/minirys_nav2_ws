@@ -26,6 +26,8 @@ find_package(rclcpp REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(minirys_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 set(dep_pkgs
@@ -33,6 +35,8 @@ set(dep_pkgs
     nav2_costmap_2d
     pluginlib
     minirys_msgs
+    tf2
+    tf2_ros
     geometry_msgs)
 
 # === Build ===
