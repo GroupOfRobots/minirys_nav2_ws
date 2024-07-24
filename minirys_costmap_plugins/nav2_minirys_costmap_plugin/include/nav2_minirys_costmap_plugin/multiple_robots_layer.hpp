@@ -57,22 +57,20 @@ private:
 
     std::string extractFirstNamespace(const std::string &full_namespace);
 
-    void drawFootprint(nav2_costmap_2d::Costmap2D & master_grid,
+    void drawFootprints(nav2_costmap_2d::Costmap2D &master_grid,
                         const std::vector<geometry_msgs::msg::Point> &footprint,
-                        double x, double y, double theta, int min_i, int min_j, int max_i, int max_j);
+                        const std::unordered_map<std::string, geometry_msgs::msg::TransformStamped> &poses,
+                        const rclcpp::Time &current_time,
+                        int min_i, int min_j, int max_i, int max_j);
 
 
     double last_min_x_, last_min_y_, last_max_x_, last_max_y_;
 
     bool need_recalculation_;
 
-    std::vector<geometry_msgs::msg::Point> footprint_;
-
     std::vector<std::string> robots_namespaces_;
 
-    // std::unordered_map<std::string, rclcpp::Subscription<geometry_msgs::msg::Pose2D>::SharedPtr> robots_poses_subscribtions_;
-
-    std::unordered_map<std::string, geometry_msgs::msg::Pose2D> current_robots_poses_;
+    std::unordered_map<std::string, geometry_msgs::msg::TransformStamped> current_robots_transforms_;
 
     rclcpp::TimerBase::SharedPtr timer_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;

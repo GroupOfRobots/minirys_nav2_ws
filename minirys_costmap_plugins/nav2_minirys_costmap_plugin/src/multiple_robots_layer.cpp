@@ -30,8 +30,6 @@ void MultipleRobotsLayer::onInitialize()
     need_recalculation_ = false;
     current_ = true;
 
-    this->footprint_ = layered_costmap_->getFootprint();
-
     std::string nodeNamespace = node->get_namespace();
     nodeNamespace = extractFirstNamespace(nodeNamespace);
 
@@ -67,8 +65,8 @@ void MultipleRobotsLayer::receiveRobotsNamespaces(const minirys_msgs::msg::Robot
 
     if (new_namespaces != this->robots_namespaces_)
     {
-        // auto node = node_.lock();
-        // RCLCPP_INFO(node->get_logger(), "Received namespaces of robots has changed.");
+        auto node = node_.lock();
+        RCLCPP_INFO(node->get_logger(), "Received namespaces of robots has changed.");
 
         this->robots_namespaces_ = new_namespaces;
         need_recalculation_ = true;
@@ -90,21 +88,13 @@ void MultipleRobotsLayer::receiveRobotsNamespaces(const minirys_msgs::msg::Robot
     }
 }
 
-// void MultipleRobotsLayer::receiveRobotPose(const geometry_msgs::msg::Pose2D::SharedPtr msg, const std::string &robot_namespace)
-// {
-//     current_robots_poses_[robot_namespace] = *msg;
-// }
-
 void MultipleRobotsLayer::getRobotsPoses()
 {
-    // need_recalculation_ = true;
-    auto node = node_.lock();
-    RCLCPP_WARN(node->get_logger(), "Chce pose robotow");
     if (this->robots_namespaces_.empty())
     {
-        RCLCPP_WARN(node->get_logger(), "Nie mam namespacow robotów");
         return;
     }
+    auto node = node_.lock();
     for (const auto& ns : this->robots_namespaces_)
     {
         std::string target_frame = ns + "/base_footprint";
@@ -112,32 +102,14 @@ void MultipleRobotsLayer::getRobotsPoses()
         try
         {
             transform_stamped = this->tf_buffer_->lookupTransform(ns + "/map", target_frame, tf2::TimePointZero);
-            RCLCPP_WARN(node->get_logger(), "Probuje wziac tf");
         }
         catch (tf2::TransformException &ex)
         {
             RCLCPP_WARN(node->get_logger(), "Could not transform '%s' to 'map': %s", target_frame.c_str(), ex.what());
             continue;
         }
-
-        geometry_msgs::msg::Pose2D pose_2d;
-        pose_2d.x = transform_stamped.transform.translation.x;
-        pose_2d.y = transform_stamped.transform.translation.y;
-        pose_2d.theta = transform_stamped.transform.rotation.z;
-        // pose_2d.theta = tf2::impl::getYaw(tf2::impl::toQuaternion(transform_stamped.transform.rotation));
-
-        // {
-            // std::lock_guard<std::mutex> lock(pose_mutex_);
-        current_robots_poses_[ns] = pose_2d;
-        // }
-
-        RCLCPP_INFO(node->get_logger(), "[%s] Robot pose in map frame: [x: %f, y: %f, theta: %f]",
-                    ns.c_str(),
-                    pose_2d.x,
-                    pose_2d.y,
-                    pose_2d.theta);
+        current_robots_transforms_[ns] = transform_stamped;
     }
-    // need_recalculation_ = true;
 }
 
 // The method is called to ask the plugin: which area of costmap it needs to update.
@@ -210,76 +182,92 @@ bool MultipleRobotsLayer::isPointInPolygon(double x, double y, const std::vector
     return inside;
 }
 
-
-void MultipleRobotsLayer::drawFootprint(nav2_costmap_2d::Costmap2D & master_grid,
+void MultipleRobotsLayer::drawFootprints(nav2_costmap_2d::Costmap2D & master_grid,
                                         const std::vector<geometry_msgs::msg::Point> &footprint,
-                                        double x, double y, double theta, int min_i, int min_j,int max_i, int max_j)
+                                        const std::unordered_map<std::string, geometry_msgs::msg::TransformStamped> &poses,
+                                        const rclcpp::Time &current_time,
+                                        int min_i, int min_j, int max_i, int max_j)
 {
+
     unsigned char * master_array = master_grid.getCharMap();
+
+    // Precompute the world coordinates for the entire grid
+    std::vector<std::vector<tf2::Vector3>> world_points(
+    max_j - min_j + 1, std::vector<tf2::Vector3>(max_i - min_i + 1));
+
+    for (int j = min_j; j <= max_j; ++j)
+    {
+        for (int i = min_i; i <= max_i; ++i)
+        {
+            double wx, wy;
+            master_grid.mapToWorld(i, j, wx, wy);
+            world_points[j - min_j][i - min_i] = tf2::Vector3(wx, wy, 0.0);
+        }
+    }
+
+    for (const auto &pose_pair : poses) {
+    const auto &transform_stamped = pose_pair.second;
+
+    // Check if the timestamp is outdated
+    rclcpp::Time timestamp(transform_stamped.header.stamp);
+    if ((current_time - timestamp).seconds() > 1.0) // Skip if outdated
+    {
+        continue;
+    }
+
+    // Extract the translation and rotation from the TransformStamped
+    double x = transform_stamped.transform.translation.x;
+    double y = transform_stamped.transform.translation.y;
+    tf2::Quaternion q(
+        transform_stamped.transform.rotation.x,
+        transform_stamped.transform.rotation.y,
+        transform_stamped.transform.rotation.z,
+        transform_stamped.transform.rotation.w);
 
     // Create the transformation matrix from the pose
     tf2::Transform transform;
     transform.setOrigin(tf2::Vector3(x, y, 0.0));
-    tf2::Quaternion q;
-    q.setRPY(0, 0, theta);
     transform.setRotation(q);
 
     // Transform the footprint points
     std::vector<tf2::Vector3> transformed_footprint;
-    for (const auto & point : footprint)
+    for (const auto &point : footprint)
     {
         tf2::Vector3 tf_point(point.x, point.y, 0.0);
         transformed_footprint.push_back(transform * tf_point);
     }
 
     // Fill the footprint area in the costmap
-    for (int j = min_j; j <= max_j; j++)
+    for (int j = min_j; j <= max_j; ++j)
     {
-        for (int i = min_i; i <= max_i; i++)
+        for (int i = min_i; i <= max_i; ++i)
         {
-            double wx, wy;
-            master_grid.mapToWorld(i, j, wx, wy);
-            tf2::Vector3 point(wx, wy, 0.0);
+            const tf2::Vector3 &point = world_points[j - min_j][i - min_i];
             tf2::Vector3 transformed_point = transform.inverse() * point;
 
             if (isPointInPolygon(transformed_point.x(), transformed_point.y(), footprint))
             {
                 unsigned int index = master_grid.getIndex(i, j);
-                master_array[index] = LETHAL_OBSTACLE;
+                master_array[index] = LETHAL_OBSTACLE; // Draw the footprint
             }
         }
+    }
     }
 }
 
 void MultipleRobotsLayer::updateCosts(nav2_costmap_2d::Costmap2D & master_grid,
                                       int min_i, int min_j,int max_i, int max_j)
 {
-    if (!enabled_)
+    if (!enabled_ || current_robots_transforms_.empty())
     {
         return;
     }
 
-
-
-    // Example Pose2D for the footprint
-    // getRobotsPoses();
-    double x = 0.5;      // x-coordinate
-    double y = 0.5;      // y-coordinate
-    double theta = M_PI / 4;  // 45 degrees in radians
-    if(!current_robots_poses_.empty())
-    {
-        std::string ns = robots_namespaces_[0];
-        x = current_robots_poses_[ns].x;
-        y = current_robots_poses_[ns].y;
-        theta = current_robots_poses_[ns].theta;
-    }
-
-    // Get the robot footprint from the layered costmap
-    std::vector<geometry_msgs::msg::Point> footprint = layered_costmap_->getFootprint();
-
     // Draw the footprint on the costmap
-    drawFootprint(master_grid, footprint, x, y, theta, min_i, min_j, max_i, max_j);
-    // need_recalculation_ = false;
+    std::vector<geometry_msgs::msg::Point> footprint = layered_costmap_->getFootprint();
+    auto node = node_.lock();
+    auto current_time = node->now();
+    drawFootprints(master_grid, footprint, current_robots_transforms_, current_time, min_i, min_j, max_i, max_j);
 }
 
 
