@@ -1,0 +1,5 @@
+<library path="minirys_nav2_behavior_plugins">
+  <class name="minirys_nav2_behavior_pluggins/GoalOccupancy" type="minirys_nav2_behavior::GoalOccupancy" base_class_type="nav2_core::Behavior">
+    <description>This is pluggin which check if robot goal pose is occupied.</description>
+  </class>
+</library>

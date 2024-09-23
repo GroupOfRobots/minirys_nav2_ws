@@ -32,6 +32,7 @@ def generate_launch_description():
 
     namespace = LaunchConfiguration('namespace')
     map_yaml_file = LaunchConfiguration('map')
+    default_bt_xml_file = LaunchConfiguration('default_bt_xml_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
@@ -70,7 +71,8 @@ def generate_launch_description():
     param_substitutions = {
         'use_sim_time': use_sim_time,
         'autostart': autostart,
-        'yaml_filename': map_yaml_file}
+        'yaml_filename': map_yaml_file,
+        'default_bt_xml_filename': default_bt_xml_file,}
 
     configured_params = RewrittenYaml(
         source_file=params_file,
@@ -90,6 +92,13 @@ def generate_launch_description():
         'map',
         default_value=os.path.join(bringup_dir, 'maps', 'heros_board.yaml'),
         description='Full path to map yaml file to load')
+
+    declare_bt_xml_file = DeclareLaunchArgument(
+        'default_bt_xml_file',
+        default_value=os.path.join(
+            get_package_share_directory('minirys_nav2_behavior_pluggins'),
+            'behavior_trees', 'goalcheck.xml'),
+        description='Full path to the behavior tree xml file to use')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
@@ -260,6 +269,7 @@ def generate_launch_description():
                 plugin='nav2_bt_navigator::BtNavigator',
                 name='bt_navigator',
                 parameters=[configured_params],
+                # parameters=[{'default_bt_xml_file': default_bt_xml_file}],
                 remappings=remappings),
             ComposableNode(
                 package='nav2_waypoint_follower',
@@ -305,6 +315,7 @@ def generate_launch_description():
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_map_yaml_cmd)
+    ld.add_action(declare_bt_xml_file)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_autostart_cmd)

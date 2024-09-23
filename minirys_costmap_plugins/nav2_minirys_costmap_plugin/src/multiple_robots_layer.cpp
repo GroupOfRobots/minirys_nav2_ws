@@ -34,7 +34,7 @@ void MultipleRobotsLayer::onInitialize()
     nodeNamespace = extractFirstNamespace(nodeNamespace);
 
     this->robotsNamespacesSubscribtion = node->create_subscription<minirys_msgs::msg::RobotsNamespaces>(
-            "/" + nodeNamespace + "/" "robots_namespaces", 10,
+            "/" + nodeNamespace + "/robots_namespaces", 10,
             std::bind(&MultipleRobotsLayer::receiveRobotsNamespaces, this, std::placeholders::_1));
 
     this->tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node->get_clock());

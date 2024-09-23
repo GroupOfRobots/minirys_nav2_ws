@@ -1,0 +1,60 @@
+<root main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+      <RetryUntilSuccesful num_attempts="-1">
+        <GoalOccupancy/>
+      </RetryUntilSuccesful>
+    </BehaviorTree>
+</root>
+
+
+<!-- <root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <!-- <Sequence name="CheckGoalAndNavigate"> -->
+      <!-- Custom Condition Node to check for goal conflict -->
+      <GoalOccupancy />
+
+      <!-- Continue with normal navigation if no conflict -->
+      <ComputePathToPose goal="{goal}" path="{path}" />
+      <FollowPath path="{path}" />
+    <!-- </Sequence> -->
+  </BehaviorTree>
+</root> -->
+
+<!-- <root main_tree_to_execute="MainTree">
+  <TreeNodesModel>
+    <Condition ID="GoalOccupancy"/>
+  </TreeNodesModel>
+
+<!-- <root main_tree_to_execute="MainTree"> -->
+  <BehaviorTree ID="MainTree">
+    <Sequence name="MainSequence">
+      <!-- Custom Conflict Checking Node -->
+      <GoalOccupancy/>
+
+      <!-- Continue with normal navigation if no conflict -->
+      <ComputePathToPose goal="{goal}" path="{path}" />
+      <FollowPath path="{path}" />
+    </Sequence>
+  </BehaviorTree>
+</root> -->
+
+
+  <!-- <BehaviorTree ID="MainTree">
+    <Fallback name="ReplanIfConflict">
+      <!-- No Conflict, Proceed Normally -->
+      <Sequence name="NoConflict">
+        <GoalOccupancy/>
+        <ComputePathToPose goal="{goal}" path="{path}" />
+        <FollowPath path="{path}" />
+      </Sequence>
+
+      <!-- If Conflict, Replan -->
+      <Sequence name="ConflictDetected">
+        <Wait wait_duration="5"/>
+        <ComputePathToPose goal="{replanned_goal}" path="{path}" />
+      </Sequence>
+    </Fallback>
+  </BehaviorTree>
+</root> -->
+
+
