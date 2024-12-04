@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(nav2_minirys_costmap_plugin)
+project(minirys_nav2_costmap_plugins)
 
 set(lib_name ${PROJECT_NAME}_core)
 

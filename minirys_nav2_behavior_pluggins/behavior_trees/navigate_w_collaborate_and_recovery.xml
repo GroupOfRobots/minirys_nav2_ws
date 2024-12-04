@@ -1,16 +1,39 @@
 <?xml version="1.0"?>
-<root main_tree_to_execute="BehaviorTree">
+<root main_tree_to_execute="MainTree">
     <!-- ////////// -->
-    <BehaviorTree ID="BehaviorTree">
-        <!-- <Condition ID="GoalOccupancy" goal=""/> -->
-        <Sequence name="CheckGoalAndNavigate">
-            <!-- Custom Condition Node to check for goal conflict -->
-            <GoalOccupancy goal="{goal}"/>
-
-            <!-- Continue with normal navigation if no conflict -->
-            <ComputePathToPose goal="{goal}" path="{path}" />
-            <FollowPath path="{path}" />
-        </Sequence>
+    <BehaviorTree ID="MainTree">
+        <Control ID="RecoveryNode" name="NavigateRecovery" number_of_retries="6">
+            <Control ID="PipelineSequence" name="NavigateWithReplanning">
+                <Decorator ID="RateController" hz="1.0">
+                    <Control ID="RecoveryNode" name="ComputePathToPose" number_of_retries="1">
+                        <Action ID="ComputePathToPose" goal="{goal}" path="{path}"/>
+                        <Fallback name="CollaborationFallback">
+                            <Sequence name="CollaborationSequence">
+                                <Condition ID="GoalOccupancy" collaborators="{collaborators}" collaborators_poses="{collaborators_poses}" goal="{goal}"/>
+                                <Action ID="Collaborate" collaborators="{collaborators}" collaborators_poses="{collaborators_poses}" goal="{goal}"/>
+                            </Sequence>
+                            <Action ID="ClearEntireCostmap" name="ClearGlobalCostmap-Context" server_timeout="" service_name="global_costmap/clear_entirely_global_costmap"/>
+                        </Fallback>
+                    </Control>
+                </Decorator>
+                <Control ID="RecoveryNode" name="FollowPath" number_of_retries="1">
+                    <Action ID="FollowPath" controller_id="FollowPath" path="{path}" />
+                    <Action ID="ClearEntireCostmap" name="ClearLocalCostmap-Context" server_timeout="" service_name="local_costmap/clear_entirely_local_costmap"/>
+                </Control>
+            </Control>
+            <ReactiveFallback name="RecoveryFallback">
+                <Condition ID="GoalUpdated"/>
+                <Control ID="RoundRobin" name="RecoveryActions">
+                    <Sequence name="ClearingActions">
+                        <Action ID="ClearEntireCostmap" name="ClearLocalCostmap-Subtree" server_timeout="" service_name="local_costmap/clear_entirely_local_costmap"/>
+                        <Action ID="ClearEntireCostmap" name="ClearGlobalCostmap-Subtree" server_timeout="" service_name="global_costmap/clear_entirely_global_costmap"/>
+                    </Sequence>
+                    <Action ID="Spin" spin_dist="1.57"/>
+                    <Action ID="Wait" wait_duration="5"/>
+                    <Action ID="BackUp" backup_dist="0.30" backup_speed="0.05"/>
+                </Control>
+            </ReactiveFallback>
+        </Control>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
@@ -70,6 +93,11 @@
         <Action ID="ClearEntireCostmap">
             <input_port name="server_timeout">Server timeout</input_port>
             <input_port name="service_name">Service name</input_port>
+        </Action>
+        <Action ID="Collaborate">
+            <input_port name="collaborators">List of robots to collaborate</input_port>
+            <input_port name="collaborators_poses">Pose of collaborator</input_port>
+            <input_port name="goal">Vector of navigation goals</input_port>
         </Action>
         <Action ID="ComputePathThroughPoses">
             <output_port name="error_code_id">&quot;Compute path through poses error code&quot;</output_port>
@@ -131,14 +159,10 @@
             <input_port name="topic_name">Name of the topic to receive goal checker selection commands</input_port>
         </Action>
         <Condition ID="GoalOccupancy">
-            <input_port name="goal">Vector of navigation goals</input_port>
             <output_port name="collaborators">List of robots to collaborate</output_port>
             <output_port name="collaborators_poses">Pose of collaborator</output_port>
+            <input_port name="goal">Vector of navigation goals</input_port>
         </Condition>
-        <Action ID="Collaborate">
-            <input_port name="collaborators">List of robots to collaborate</input_port>
-            <input_port name="collaborators_poses">Pose of collaborator</input_port>
-        </Action>
         <Condition ID="GoalReached">
             <input_port name="global_frame">Reference frame</input_port>
             <input_port name="goal">Destination</input_port>

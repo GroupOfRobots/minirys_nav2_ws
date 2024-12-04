@@ -38,6 +38,7 @@ set(dependencies
   std_msgs
   nav2_util
   nav2_msgs
+  action_msgs
   nav_msgs
   minirys_msgs
   geometry_msgs
@@ -53,6 +54,9 @@ set(dependencies
 
 add_library(minirys_nav2_behavior_pluggins_goal_occupied_condition_bt_node SHARED src/condition/goal_occupancy.cpp)
 list(APPEND plugin_libs minirys_nav2_behavior_pluggins_goal_occupied_condition_bt_node)
+
+add_library(minirys_nav2_behavior_pluggins_collaborate_action_bt_node SHARED src/action/collaborate.cpp)
+list(APPEND plugin_libs minirys_nav2_behavior_pluggins_collaborate_action_bt_node)
 
 foreach(bt_plugin ${plugin_libs})
   ament_target_dependencies(${bt_plugin} ${dependencies})

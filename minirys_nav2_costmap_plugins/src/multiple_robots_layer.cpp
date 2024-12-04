@@ -1,13 +1,14 @@
-#include "nav2_minirys_costmap_plugin/multiple_robots_layer.hpp"
+#include "multiple_robots_layer.hpp"
 #include "nav2_costmap_2d/costmap_math.hpp"
 #include "nav2_costmap_2d/footprint.hpp"
 #include "rclcpp/parameter_events_filter.hpp"
+
 
 using nav2_costmap_2d::LETHAL_OBSTACLE;
 using nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
 using nav2_costmap_2d::NO_INFORMATION;
 
-namespace nav2_minirys_costmap_plugin
+namespace minirys_nav2_costmap_plugins
 {
 
 MultipleRobotsLayer::MultipleRobotsLayer()
@@ -271,10 +272,10 @@ void MultipleRobotsLayer::updateCosts(nav2_costmap_2d::Costmap2D & master_grid,
 }
 
 
-}  // namespace nav2_minirys_costmap_plugin
+}  // namespace minirys_nav2_costmap_plugins
 
-// This is the macro allowing a nav2_minirys_costmap_plugin::MultipleRobotsLayer class
+// This is the macro allowing a minirys_nav2_costmap_plugins::MultipleRobotsLayer class
 // to be registered in order to be dynamically loadable of base type nav2_costmap_2d::Layer.
 // Usually places in the end of cpp-file where the loadable class written.
 #include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(nav2_minirys_costmap_plugin::MultipleRobotsLayer, nav2_costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(minirys_nav2_costmap_plugins::MultipleRobotsLayer, nav2_costmap_2d::Layer)

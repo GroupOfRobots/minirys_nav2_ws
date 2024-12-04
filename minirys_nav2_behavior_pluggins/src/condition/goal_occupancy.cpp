@@ -31,7 +31,6 @@ GoalOccupancy::GoalOccupancy(const std::string & condition_name,
 
     this->tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
     this->tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*this->tf_buffer_);
-    // this->timer_ = node->create_wall_timer(std::chrono::milliseconds(100), std::bind(&GoalOccupancy::getRobotsPoses, this));
 
 }
 
@@ -67,6 +66,8 @@ BT::NodeStatus GoalOccupancy::tick()
         if (distance < collision_threshold_)
         {
             RCLCPP_WARN(node_->get_logger(), "Goal pose occupied by '%s' robot.", robot_namespace.c_str());
+            setOutput("collaborators", robot_namespace);
+            setOutput("collaborators_poses", other_robot_pose);
             return BT::NodeStatus::FAILURE; // Conflict detected
         }
     }

@@ -16,7 +16,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace nav2_minirys_costmap_plugin
+namespace minirys_nav2_costmap_plugins
 {
 
 class MultipleRobotsLayer : public nav2_costmap_2d::Layer
@@ -78,6 +78,6 @@ private:
     std::mutex pose_mutex_;
 };
 
-}  // namespace nav2_minirys_costmap_plugin
+}  // namespace minirys_nav2_costmap_plugins
 
 #endif  // MULTIPLE_ROBOTS_LAYER_HPP_

@@ -1,0 +1,5 @@
+<library path="minirys_nav2_costmap_plugins_core">
+  <class name="minirys_nav2_costmap_plugins/MultipleRobotsLayer" type="minirys_nav2_costmap_plugins::MultipleRobotsLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>This is plugin which includes MiniRys robots footprint as obstacles</description>
+  </class>
+</library>

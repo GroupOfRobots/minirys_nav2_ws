@@ -42,12 +42,9 @@ public:
 
     static BT::PortsList providedPorts()
     {
-        return {BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination to plan to"),};
-        // return {BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination"),
-        //         BT::InputPort<std::string>("global_frame", "Global frame"),
-        //         BT::InputPort<std::string>("robot_base_frame", "Robot base frame"),
-        //         BT::InputPort<std::unordered_map<std::string, geometry_msgs::msg::PoseStamped>>("other_robot_goals"),
-        //         BT::InputPort<minirys_msgs::msg::RobotsNamespaces>("/minirys3/robots_namespaces")};
+        return {BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination to plan to"),
+                BT::OutputPort<std::string>("collaborators", "List of robots to collaborate"),
+                BT::OutputPort<geometry_msgs::msg::PoseStamped>("collaborators_poses", "Pose of collaborator")};
     }
 
 protected:
@@ -55,7 +52,6 @@ protected:
 
 private:
     rclcpp::Node::SharedPtr node_;
-    // rclcpp::TimerBase::SharedPtr timer_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
     rclcpp::CallbackGroup::SharedPtr callback_group_;
@@ -65,7 +61,7 @@ private:
     std::string nodeNamespace_;
     double goal_reached_tol_;
     double transform_tolerance_;
-    const double collision_threshold_ = 1.0;
+    const double collision_threshold_ = 0.3;
     std::string robot_base_frame_;
     std::vector<std::string> robots_namespaces_;
     std::unordered_map<std::string, geometry_msgs::msg::TransformStamped> robots_transforms_;

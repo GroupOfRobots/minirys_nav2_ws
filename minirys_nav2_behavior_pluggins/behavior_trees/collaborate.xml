@@ -3,14 +3,14 @@
     <!-- ////////// -->
     <BehaviorTree ID="BehaviorTree">
         <!-- <Condition ID="GoalOccupancy" goal=""/> -->
-        <Sequence name="CheckGoalAndNavigate">
+        <Fallback name="CheckGoalAndNavigate">
             <!-- Custom Condition Node to check for goal conflict -->
-            <GoalOccupancy goal="{goal}"/>
-
+            <GoalOccupancy goal="{goal}" collaborators="{collaborators}" collaborators_poses="{collaborators_poses}"/>
+            <Collaborate goal="{goal}" collaborators="{collaborators}" collaborators_poses="{collaborators_poses}"/>
             <!-- Continue with normal navigation if no conflict -->
             <ComputePathToPose goal="{goal}" path="{path}" />
             <FollowPath path="{path}" />
-        </Sequence>
+        </Fallback>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
@@ -70,6 +70,11 @@
         <Action ID="ClearEntireCostmap">
             <input_port name="server_timeout">Server timeout</input_port>
             <input_port name="service_name">Service name</input_port>
+        </Action>
+        <Action ID="Collaborate">
+            <input_port name="collaborators">List of robots to collaborate</input_port>
+            <input_port name="collaborators_poses">Pose of collaborator</input_port>
+            <input_port name="goal">Vector of navigation goals</input_port>
         </Action>
         <Action ID="ComputePathThroughPoses">
             <output_port name="error_code_id">&quot;Compute path through poses error code&quot;</output_port>
@@ -131,14 +136,10 @@
             <input_port name="topic_name">Name of the topic to receive goal checker selection commands</input_port>
         </Action>
         <Condition ID="GoalOccupancy">
-            <input_port name="goal">Vector of navigation goals</input_port>
             <output_port name="collaborators">List of robots to collaborate</output_port>
             <output_port name="collaborators_poses">Pose of collaborator</output_port>
+            <input_port name="goal">Vector of navigation goals</input_port>
         </Condition>
-        <Action ID="Collaborate">
-            <input_port name="collaborators">List of robots to collaborate</input_port>
-            <input_port name="collaborators_poses">Pose of collaborator</input_port>
-        </Action>
         <Condition ID="GoalReached">
             <input_port name="global_frame">Reference frame</input_port>
             <input_port name="goal">Destination</input_port>
