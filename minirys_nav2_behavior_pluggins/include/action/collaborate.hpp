@@ -40,10 +40,6 @@ public:
 
     void receiveCollaboratorStatus(action_msgs::msg::GoalStatusArray msg, std::string collaborator_namespace);
 
-    void receiveCollaboratorCostmap(nav_msgs::msg::OccupancyGrid msg, std::string collaborator_namespace);
-
-    bool isFreeSpace(const geometry_msgs::msg::PoseStamped& pose, std::string collaborator);
-
     geometry_msgs::msg::PoseStamped generateRandomFreePose(const geometry_msgs::msg::PoseStamped& current_pose, double radius, double min_offset, std::string collaborator);
 
 private:
@@ -51,10 +47,7 @@ private:
     std::string nodeNamespace_;
     std::vector<std::string> collaborators_namespaces_;
     std::unordered_map<std::string, bool> collaborators_nav_status;
-    std::unordered_map<std::string, nav_msgs::msg::OccupancyGrid> collaborators_costmap;
     std::unordered_map<std::string, rclcpp::Subscription<action_msgs::msg::GoalStatusArray>::SharedPtr> collaborators_status_sub_;
-    std::unordered_map<std::string, rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr> collaborators_costmap_sub_;
-    std::unordered_map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr> collaborators_goal_pose_pub_;
     std::unordered_map<std::string, rclcpp::Client<minirys_msgs::srv::MoveFromPose>::SharedPtr> collaborators_move_pose_cli_;
 };
 

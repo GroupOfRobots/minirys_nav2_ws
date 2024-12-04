@@ -277,7 +277,7 @@ map_server:
     topic_name: "/minirys4/map"
     frame_id: "minirys4/map"
     use_sim_time: False
-    yaml_filename: "/home/jakub/minirys_nav2_ws/src/minirys_description/maps/swarm4_map.yaml"
+    yaml_filename: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_bringup/maps/swarm4_map.yaml"
 
 map_saver:
   ros__parameters:

@@ -392,7 +392,7 @@ map_server:
     topic_name: "<robot_namespace>/map"
     frame_id: "<robot_frame>/map"
     use_sim_time: False
-    yaml_filename: "/home/jakub/minirys_nav2_ws/src/minirys_description/maps/swarm3_map.yaml"
+    yaml_filename: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_bringup/maps/swarm3_map.yaml"
 
 map_saver:
   ros__parameters:

@@ -23,7 +23,6 @@ CollaborateAction::CollaborateAction(const std::string& action_name,
 
 BT::NodeStatus CollaborateAction::tick()
 {
-    RCLCPP_INFO(node_->get_logger(), "I WAS TICKED");
     std::string collaborator_namespace;
     getInput("collaborators", collaborator_namespace);
     if (collaborator_namespace.empty())
@@ -39,15 +38,6 @@ BT::NodeStatus CollaborateAction::tick()
             [this, collaborator_namespace] (action_msgs::msg::GoalStatusArray msg)
                 {this->receiveCollaboratorStatus(msg, collaborator_namespace);});
 
-        // std::string contmap_topic = "/" + collaborator_namespace + "/global_costmap/costmap";
-        // this->collaborators_costmap_sub_[collaborator_namespace] = node_->create_subscription<nav_msgs::msg::OccupancyGrid>(
-        //     contmap_topic, 10,
-        //     [this, collaborator_namespace] (nav_msgs::msg::OccupancyGrid msg)
-        //         {this->receiveCollaboratorCostmap(msg, collaborator_namespace);});
-
-        // std::string goal_topic = "/" + collaborator_namespace + "/goal_pose";
-        // this->collaborators_goal_pose_pub_[collaborator_namespace] = node_->create_publisher<geometry_msgs::msg::PoseStamped>(
-        //     goal_topic, 10);
         std::string move_pose_topic = "/" + collaborator_namespace + "/move_from_pose";
         this->collaborators_move_pose_cli_[collaborator_namespace] = node_->create_client<minirys_msgs::srv::MoveFromPose>(
             move_pose_topic);
@@ -61,17 +51,12 @@ BT::NodeStatus CollaborateAction::tick()
         return BT::NodeStatus::SUCCESS;
     }
 
-
-    // getInput("collaborators_poses", current_collaborator_pose);
-    // geometry_msgs::msg::PoseStamped goal_pose = generateRandomFreePose(current_collaborator_pose, 2.0, 1.0, collaborator_namespace);
-    // collaborators_goal_pose_pub_[collaborator_namespace]->publish(goal_pose);
-
     RCLCPP_INFO(node_->get_logger(), "Robot [%s] is stationary.", collaborator_namespace.c_str());
     RCLCPP_INFO(node_->get_logger(), "SENDING goal pose in order to collaborate");
     geometry_msgs::msg::PoseStamped current_goal_pose;
     getInput("goal", current_goal_pose);
     auto request = std::make_shared<minirys_msgs::srv::MoveFromPose::Request>();
-    request->pose_stamped = current_goal_pose;  // Example pose data
+    request->pose_stamped = current_goal_pose;
     request->robot_namespace = this->nodeNamespace_;
 
     // Send the request and handle the response
@@ -107,72 +92,6 @@ void CollaborateAction::receiveCollaboratorStatus(action_msgs::msg::GoalStatusAr
             this->collaborators_nav_status[collaborator_namespace] = false;
         }
     }
-}
-
-// void CollaborateAction::receiveCollaboratorCostmap(nav_msgs::msg::OccupancyGrid msg, std::string collaborator_namespace)
-// {
-//     RCLCPP_INFO(node_->get_logger(), "Costmap received");
-//     this->collaborators_costmap[collaborator_namespace] = msg;
-// }
-
-geometry_msgs::msg::PoseStamped CollaborateAction::generateRandomFreePose(const geometry_msgs::msg::PoseStamped& current_pose,
-                                                                          double radius, double min_offset, std::string collaborator)
-{
-  geometry_msgs::msg::PoseStamped pose;
-  pose.header.frame_id = "map";
-  pose.header.stamp = node_->now();
-
-  bool found_free_space = false;
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> random_angle(0.0, 2 * M_PI);
-  std::uniform_real_distribution<> random_radius(min_offset, radius);
-
-  while (!found_free_space) {
-    // Generate random coordinates within a radius
-    double angle = random_angle(gen);
-    double distance = random_radius(gen);
-
-    double x = current_pose.pose.position.x + distance * cos(angle);
-    double y = current_pose.pose.position.y + distance * sin(angle);
-
-    pose.pose.position.x = x;
-    pose.pose.position.y = y;
-    pose.pose.orientation.w = 1.0;  // Face forward
-
-    // Check if the random pose is in a free space
-    // if (isFreeSpace(pose, collaborator)) {
-      found_free_space = true;
-    // }
-  }
-
-  return pose;
-}
-
-// Check if the pose is free of obstacles
-bool CollaborateAction::isFreeSpace(const geometry_msgs::msg::PoseStamped& pose, std::string collaborator)
-{
-  // Get the index in the global costmap grid based on the pose
-  auto global_costmap_ = collaborators_costmap[collaborator];
-  int grid_x = (pose.pose.position.x - global_costmap_.info.origin.position.x) / global_costmap_.info.resolution;
-  int grid_y = (pose.pose.position.y - global_costmap_.info.origin.position.y) / global_costmap_.info.resolution;
-
-  // Ensure the index is within the bounds of the costmap
-  if (grid_x < 0 || grid_y < 0 || grid_x >= static_cast<int>(global_costmap_.info.width) || grid_y >= static_cast<int>(global_costmap_.info.height)) {
-    return false;
-  }
-
-  int index = grid_y * global_costmap_.info.width + grid_x;
-
-  // Check if the cell is free
-  if (index < 0 || index >= static_cast<int>(global_costmap_.data.size())) {
-    return false;
-  }
-  // Use nav2_costmap_2d constants to check for obstacles
-  int8_t cell_value = global_costmap_.data[index];
-
-  // Return true if the space is free, otherwise false (considering LETHAL_OBSTACLE or INSCRIBED_INFLATED_OBSTACLE as obstacles)
-  return cell_value != nav2_costmap_2d::LETHAL_OBSTACLE && cell_value != nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
 }
 
 std::string CollaborateAction::extractFirstNamespace(const std::string &full_namespace)

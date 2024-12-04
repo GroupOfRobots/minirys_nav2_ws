@@ -37,7 +37,6 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_pub_;
     rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_subscription;
     rclcpp::Subscription<minirys_msgs::msg::RobotsNamespaces>::SharedPtr robotsNamespacesSubscribtion;
-    // std::unordered_map<std::string, rclcpp::Service<minirys_msgs::srv::MoveFromPose>::SharedPtr> collaborators_services;
     rclcpp::Service<minirys_msgs::srv::MoveFromPose>::SharedPtr collaborate_service;
 
     std::string extractFirstNamespace(const std::string &full_namespace);
@@ -45,6 +44,7 @@ private:
     void costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
     geometry_msgs::msg::PoseStamped getCurrentPoseInMap();
     bool isFreeSpace(const geometry_msgs::msg::PoseStamped& pose);
+
     geometry_msgs::msg::PoseStamped calculateAlternativePose(const geometry_msgs::msg::PoseStamped &goal_pose,
                                                              const geometry_msgs::msg::PoseStamped &current_pose,
                                                              double min_distance);
@@ -52,8 +52,6 @@ private:
     std::vector<geometry_msgs::msg::PoseStamped> calculateCirclePoses(const geometry_msgs::msg::PoseStamped &goal_pose,
                                                                       const geometry_msgs::msg::PoseStamped &new_pose);
 
-    // void findFreeSpace(const std::shared_ptr<minirys_msgs::srv::MoveFromPose::Request> request,
-    //                    std::shared_ptr<minirys_msgs::srv::MoveFromPose::Response> response, std::string robot_namespace);
     void findFreeSpace(const std::shared_ptr<minirys_msgs::srv::MoveFromPose::Request> request,
                        std::shared_ptr<minirys_msgs::srv::MoveFromPose::Response> response);
 

@@ -49,7 +49,7 @@ private:
 
     void receiveRobotsNamespaces(const minirys_msgs::msg::RobotsNamespaces::SharedPtr msgIn);
 
-    void receiveRobotPose(const geometry_msgs::msg::Pose2D::SharedPtr msgIn, const std::string &robot_namespace);
+    // void receiveRobotPose(const geometry_msgs::msg::Pose2D::SharedPtr msgIn, const std::string &robot_namespace);
 
     void getRobotsPoses();
 

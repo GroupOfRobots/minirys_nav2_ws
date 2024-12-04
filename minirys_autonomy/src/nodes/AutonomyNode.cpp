@@ -28,12 +28,9 @@ AutonomyNode::AutonomyNode(rclcpp::NodeOptions options):
         "/" + nodeNamespace_ + "/global_costmap/costmap", rclcpp::SystemDefaultsQoS(),
         std::bind(&AutonomyNode::costmapCallback, this, std::placeholders::_1));
 
-    // std::string collaborate_topic_name = "/" + nodeNamespace_ + "/move_from_pose";
     this->collaborate_service = this->create_service<minirys_msgs::srv::MoveFromPose>(
         "/" + nodeNamespace_ + "/move_from_pose",
         std::bind(&AutonomyNode::findFreeSpace, this, std::placeholders::_1, std::placeholders::_2));
-        // &AutonomyNode::findFreeSpace);
-        // std::bind(&AutonomyNode::findFreeSpace, this, std::placeholders::_1));
 
     this->tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     this->tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*this->tf_buffer_);
@@ -56,11 +53,6 @@ void AutonomyNode::receiveRobotsNamespaces(const minirys_msgs::msg::RobotsNamesp
             if (std::find(this->robots_namespaces_.begin(), this->robots_namespaces_.end(), robot_namespace) == this->robots_namespaces_.end())
             {
                 this->robots_namespaces_.emplace_back(robot_namespace);
-                // std::string topic_name = "/" + robot_namespace + "/move_from_pose";
-                // this->collaborators_services[robot_namespace] = this->create_service<minirys_msgs::srv::MoveFromPose>(
-                //     topic_name,
-                //     [this, robot_namespace] (const std::shared_ptr<minirys_msgs::srv::MoveFromPose::Request> request, std::shared_ptr<minirys_msgs::srv::MoveFromPose::Response> response)
-                //         {this->findFreeSpace(request, response, robot_namespace);});
             }
         }
 
@@ -70,7 +62,7 @@ void AutonomyNode::receiveRobotsNamespaces(const minirys_msgs::msg::RobotsNamesp
 
 void AutonomyNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-    this->recent_costmap_ = *msg; // Store the most recent costmap
+    this->recent_costmap_ = *msg;
 }
 
 std::string AutonomyNode::extractFirstNamespace(const std::string &full_namespace)
@@ -91,30 +83,12 @@ std::string AutonomyNode::extractFirstNamespace(const std::string &full_namespac
     }
 }
 
-// geometry_msgs::msg::TransformStamped AutonomyNode::getCurrentPoseInMap()
-// {
-
-//         std::string target_frame = this->nodeNamespace_ + "/base_footprint";
-//         geometry_msgs::msg::TransformStamped transform_stamped;
-//         try
-//         {
-//             transform_stamped = this->tf_buffer_->lookupTransform(ns + "/map", target_frame, tf2::TimePointZero);
-//         }
-//         catch (tf2::TransformException &ex)
-//         {
-//             RCLCPP_WARN(node->get_logger(), "Could not transform '%s' to 'map': %s", target_frame.c_str(), ex.what());
-//             continue;
-//         }
-//         return transform_stamped
-// }
-
 geometry_msgs::msg::PoseStamped AutonomyNode::getCurrentPoseInMap()
 {
     RCLCPP_INFO(this->get_logger(), "Getting variables");
     std::string target_frame = this->nodeNamespace_ + "/base_footprint";
     geometry_msgs::msg::TransformStamped transform_stamped;
     geometry_msgs::msg::PoseStamped pose_stamped;
-
 
     try
     {
@@ -129,7 +103,7 @@ geometry_msgs::msg::PoseStamped AutonomyNode::getCurrentPoseInMap()
         pose_stamped.pose.position.y = transform_stamped.transform.translation.y;
         pose_stamped.pose.position.z = transform_stamped.transform.translation.z;
 
-        // pose_stamped.pose.orientation = transform_stamped.transform.rotation;
+        pose_stamped.pose.orientation = transform_stamped.transform.rotation;
     }
     catch (tf2::TransformException &ex)
     {
@@ -245,14 +219,13 @@ std::vector<geometry_msgs::msg::PoseStamped> AutonomyNode::calculateCirclePoses(
 
 void AutonomyNode::findFreeSpace(const std::shared_ptr<minirys_msgs::srv::MoveFromPose::Request> request,
                                  std::shared_ptr<minirys_msgs::srv::MoveFromPose::Response> response)
-                                //  std::string robot_namespace)
 {
+    RCLCPP_INFO(this->get_logger(), "Received Pose from robot '%s'", request->robot_namespace.c_str());
     RCLCPP_INFO(this->get_logger(), "Received Pose: [x: %.2f, y: %.2f, z: %.2f]",
                 request->pose_stamped.pose.position.x,
                 request->pose_stamped.pose.position.y,
                 request->pose_stamped.pose.position.z);
 
-    RCLCPP_INFO(this->get_logger(), "Received Pose from robot '%s'", request->robot_namespace.c_str());
     this->current_pose = getCurrentPoseInMap();
 
     // Simulate processing time
@@ -266,9 +239,7 @@ void AutonomyNode::findFreeSpace(const std::shared_ptr<minirys_msgs::srv::MoveFr
                 this->current_pose.pose.position.x,
                 this->current_pose.pose.position.y,
                 this->current_pose.pose.position.z);
-    RCLCPP_INFO(this->get_logger(), "Getting calculateAlternativePose");
     geometry_msgs::msg::PoseStamped new_pose = calculateAlternativePose(request->pose_stamped, this->current_pose, min_distance);
-    RCLCPP_INFO(this->get_logger(), "Getting isFreeSpace");
     if (isFreeSpace(new_pose))
     {
         RCLCPP_INFO(this->get_logger(), "Getting publish First Pose");
