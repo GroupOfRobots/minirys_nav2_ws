@@ -64,8 +64,8 @@ bt_navigator:
     enable_groot_monitoring: True
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
-    # default_nav_to_pose_bt_xml: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_behavior_pluggins/behavior_trees/navigate_w_collaborate_and_recovery2.xml"
-    default_nav_to_pose_bt_xml: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_behavior_pluggins/behavior_trees/collaborate.xml"
+    default_nav_to_pose_bt_xml: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_behavior_pluggins/behavior_trees/navigate_w_collaborate_and_recovery3.xml"
+    # default_nav_to_pose_bt_xml: "/home/jakub/minirys_nav2_ws/src/minirys_nav2_behavior_pluggins/behavior_trees/collaborate.xml"
     # "minirys_nav2_behavior_pluggins/behavior_trees/navigate_w_goal_checking.xml"
     # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
     # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
@@ -269,7 +269,7 @@ controller_server:
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "PathAlign", "PathDist", "GoalAlign", "GoalDist"]
       BaseObstacle.scale: 0.01
       # ObstacleFootprint.scale: 1.1
-      PathAlign.scale: 0.0
+      PathAlign.scale: 10.0
       PathAlign.forward_point_distance: 0.1
       PathDist.scale: 24.20
       PathDist.aggregation_type: "last"
@@ -278,11 +278,11 @@ controller_server:
       # PreferForward.strafe_theta: 0.35
       # PreferForward.theta_scale: 10.0
       # PreferForward.scale: 1.0
-      GoalAlign.scale: 0.0
+      GoalAlign.scale: 0.02
       GoalAlign.forward_point_distance: 0.01
       GoalDist.scale: 0.0
-      RotateToGoal.scale: 12.2
-      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.scale: 0.2
+      RotateToGoal.slowing_factor: 1.0
       RotateToGoal.lookahead_time: -1.0
 
 controller_server_rclcpp_node:

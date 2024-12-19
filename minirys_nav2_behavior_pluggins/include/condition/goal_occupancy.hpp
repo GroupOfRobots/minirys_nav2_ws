@@ -43,8 +43,7 @@ public:
     static BT::PortsList providedPorts()
     {
         return {BT::InputPort<geometry_msgs::msg::PoseStamped>("goal", "Destination to plan to"),
-                BT::OutputPort<std::string>("collaborators", "List of robots to collaborate"),
-                BT::OutputPort<geometry_msgs::msg::PoseStamped>("collaborators_poses", "Pose of collaborator")};
+                BT::OutputPort<std::vector<std::string>>("collaborators_list", "List of robots to collaborate")};
     }
 
 protected:

@@ -44,8 +44,8 @@ BT::NodeStatus GoalOccupancy::tick()
 {
     geometry_msgs::msg::PoseStamped goal_pose;
     getInput("goal", goal_pose);
-    RCLCPP_WARN(node_->get_logger(), "GOAL POSE IS x: %f y: %f z: %f",
-                goal_pose.pose.position.x,  goal_pose.pose.position.y,  goal_pose.pose.position.z);
+    // RCLCPP_WARN(node_->get_logger(), "GOAL POSE IS x: %f y: %f z: %f",
+    //             goal_pose.pose.position.x,  goal_pose.pose.position.y,  goal_pose.pose.position.z);
 
     if (status() == BT::NodeStatus::IDLE) {
         rclcpp::spin_some(node_);
@@ -53,23 +53,28 @@ BT::NodeStatus GoalOccupancy::tick()
     }
 
     getRobotsPoses();
+    std::vector<std::string> collaborators_list;
 
     for (const auto& [robot_namespace, robot_pose] : robots_transforms_)
     {
         geometry_msgs::msg::PoseStamped other_robot_pose;
         other_robot_pose.pose.position.x = robot_pose.transform.translation.x;
         other_robot_pose.pose.position.y = robot_pose.transform.translation.y;
-        RCLCPP_WARN(node_->get_logger(), "OTHER ROBOT POSE IS x: %f y: %f z: %f",
-                other_robot_pose.pose.position.x,  other_robot_pose.pose.position.y,  other_robot_pose.pose.position.z);
+        // RCLCPP_WARN(node_->get_logger(), "OTHER ROBOT POSE IS x: %f y: %f z: %f",
+        //         other_robot_pose.pose.position.x,  other_robot_pose.pose.position.y,  other_robot_pose.pose.position.z);
         double distance = calculateDistance(goal_pose, other_robot_pose);
-        RCLCPP_WARN(node_->get_logger(), "Distance to other robot is %f", distance);
+        // RCLCPP_WARN(node_->get_logger(), "Distance to other robot is %f", distance);
         if (distance < collision_threshold_)
         {
             RCLCPP_WARN(node_->get_logger(), "Goal pose occupied by '%s' robot.", robot_namespace.c_str());
-            setOutput("collaborators", robot_namespace);
-            setOutput("collaborators_poses", other_robot_pose);
-            return BT::NodeStatus::FAILURE; // Conflict detected
+            collaborators_list.emplace_back(robot_namespace);
         }
+
+    }
+    if(not collaborators_list.empty())
+    {
+        setOutput("collaborators_list", collaborators_list);
+        return BT::NodeStatus::FAILURE; // Conflict detected
     }
     RCLCPP_WARN(node_->get_logger(), "Goal NOT occupied by any robot.");
     return BT::NodeStatus::SUCCESS; // No conflict

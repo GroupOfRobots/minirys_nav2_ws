@@ -2,7 +2,7 @@
 #include <nav2_costmap_2d/costmap_2d.hpp>
 // #include "nav2_costmap_2d/costmap_math.hpp"
 #include "nav2_costmap_2d/obstacle_layer.hpp"
-
+#include <vector>
 #include <chrono>
 #include <functional>
 
@@ -15,18 +15,25 @@ AutonomyNode::AutonomyNode(rclcpp::NodeOptions options):
 {
     nodeNamespace_ = this->get_namespace();
     nodeNamespace_ = extractFirstNamespace(nodeNamespace_);
-    RCLCPP_INFO(this->get_logger(), "Namespapce is '%s'", nodeNamespace_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Namespace is '%s'", nodeNamespace_.c_str());
 
     this->goal_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
         "/" + nodeNamespace_ + "/goal_pose", 10);
+
+    this->working_status_pub_ = this->create_publisher<std_msgs::msg::Bool>(
+        "/" + nodeNamespace_ + "/is_working", 10);
 
     this->robotsNamespacesSubscribtion = this->create_subscription<minirys_msgs::msg::RobotsNamespaces>(
         "/" + nodeNamespace_ + "/robots_namespaces", rclcpp::SystemDefaultsQoS(),
         std::bind(&AutonomyNode::receiveRobotsNamespaces, this, std::placeholders::_1));
 
-    this->costmap_subscription =  this->create_subscription<nav_msgs::msg::OccupancyGrid>(
+    this->costmap_subscription = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
         "/" + nodeNamespace_ + "/global_costmap/costmap", rclcpp::SystemDefaultsQoS(),
         std::bind(&AutonomyNode::costmapCallback, this, std::placeholders::_1));
+
+    this->laser_scan_subscription = this->create_subscription<sensor_msgs::msg::LaserScan>(
+        "/" + nodeNamespace_ + "/internal/scan", rclcpp::SystemDefaultsQoS(),
+        std::bind(&AutonomyNode::laserScanCallback, this, std::placeholders::_1));
 
     this->collaborate_service = this->create_service<minirys_msgs::srv::MoveFromPose>(
         "/" + nodeNamespace_ + "/move_from_pose",
@@ -63,6 +70,22 @@ void AutonomyNode::receiveRobotsNamespaces(const minirys_msgs::msg::RobotsNamesp
 void AutonomyNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
     this->recent_costmap_ = *msg;
+}
+
+void AutonomyNode::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
+{
+    std::vector<size_t> detection_ranges = {112, 113, 114, 115};
+    this->is_working = true;
+    for (const auto &index : detection_ranges)
+    {
+        if (msg->ranges[index] > 0.05)
+        {
+            this->is_working = false;
+        }
+    }
+    std_msgs::msg::Bool is_working_msg;
+    is_working_msg.data = this->is_working;
+    this->working_status_pub_->publish(is_working_msg);
 }
 
 std::string AutonomyNode::extractFirstNamespace(const std::string &full_namespace)

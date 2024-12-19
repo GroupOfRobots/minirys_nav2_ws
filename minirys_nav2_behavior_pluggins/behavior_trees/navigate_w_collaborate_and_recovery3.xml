@@ -1,16 +1,51 @@
 <?xml version="1.0"?>
-<root main_tree_to_execute="BehaviorTree">
+<root main_tree_to_execute="MainTree">
     <!-- ////////// -->
-    <BehaviorTree ID="BehaviorTree">
-        <!-- <Condition ID="GoalOccupancy" goal=""/> -->
-        <Fallback name="CheckGoalAndNavigate">
-            <!-- Custom Condition Node to check for goal conflict -->
-            <GoalOccupancy goal="{goal}" collaborators_list="{collaborators_list}"/>
-            <Collaborate goal="{goal}" collaborators_list="{collaborators_list}"/>
-            <!-- Continue with normal navigation if no conflict -->
-            <ComputePathToPose goal="{goal}" path="{path}" />
-            <FollowPath path="{path}" />
-        </Fallback>
+    <BehaviorTree ID="MainTree">
+        <Sequence name="CollaborationRootSequence">
+            <Control ID="RecoveryNode" name="CollaborationFallback" number_of_retries="6">
+                <Condition ID="GoalOccupancy" collaborators_list="{collaborators_list}" goal="{goal}"/>
+                <Sequence name="CollaborationSequence">
+                    <Action ID="Collaborate" collaborators_list="{collaborators_list}" goal="{goal}"/>
+                    <Action ID="Wait" wait_duration="5"/>
+                </Sequence>
+            </Control>
+            <Control ID="RecoveryNode" name="NavigateRecovery" number_of_retries="6">
+                <Control ID="PipelineSequence" name="NavigateWithReplanning">
+                    <Decorator ID="RateController" hz="1.0">
+                        <Control ID="RecoveryNode" name="ComputePathToPose" number_of_retries="1">
+                            <Action ID="ComputePathToPose" goal="{goal}" path="{path}"/>
+                            <Action ID="ClearEntireCostmap" name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+                        </Control>
+                    </Decorator>
+                    <Control ID="RecoveryNode" name="FollowPath" number_of_retries="1">
+                        <Action ID="FollowPath" controller_id="FollowPath" path="{path}"/>
+                        <Fallback name="FollowCollaborationFallback">
+                            <Control ID="RecoveryNode" name="FollowCollaborationRecoveryNode" number_of_retries="6">
+                                <Condition ID="GoalOccupancy" collaborators_list="{collaborators_list}" goal="{goal}"/>
+                                <Sequence name="FollowCollaborationSequence">
+                                    <Action ID="Collaborate" collaborators_list="{collaborators_list}" goal="{goal}"/>
+                                    <Action ID="Wait" wait_duration="5"/>
+                                </Sequence>
+                            </Control>
+                            <Action ID="ClearEntireCostmap" name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+                        </Fallback>
+                    </Control>
+                </Control>
+                <ReactiveFallback name="RecoveryFallback">
+                    <Condition ID="GoalUpdated"/>
+                    <Control ID="RoundRobin" name="RecoveryActions">
+                        <Sequence name="ClearingActions">
+                            <Action ID="ClearEntireCostmap" name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+                            <Action ID="ClearEntireCostmap" name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
+                        </Sequence>
+                        <Action ID="Spin" spin_dist="1.57"/>
+                        <Action ID="Wait" wait_duration="5"/>
+                        <Action ID="BackUp" backup_dist="0.30" backup_speed="0.05"/>
+                    </Control>
+                </ReactiveFallback>
+            </Control>
+        </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
@@ -135,8 +170,8 @@
             <input_port name="topic_name">Name of the topic to receive goal checker selection commands</input_port>
         </Action>
         <Condition ID="GoalOccupancy">
-            <input_port name="goal">Vector of navigation goals</input_port>
             <output_port name="collaborators_list">List of robots to collaborate</output_port>
+            <input_port name="goal">Vector of navigation goals</input_port>
         </Condition>
         <Condition ID="GoalReached">
             <input_port name="global_frame">Reference frame</input_port>
